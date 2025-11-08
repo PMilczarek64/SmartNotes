@@ -82,7 +82,13 @@ export const addCard = (p) => async (dispatch) => {
 };
 
 
-export const editCard = (id, patch) => async () => {
+export const editCard = (id, patch) => async (dispatch, getState) => {
+  const cur = (getState().pouch.cards || []).find(c => c._id === id);
+  if (cur) {
+    // natychmiastowy, pełny obiekt -> UI od razu reaguje
+    dispatch(pouchUpsertDoc({ ...cur, ...patch, _id: id, type: 'card', updatedAt: new Date().toISOString() }));
+  }
+  // zapis do bazy (a potem i tak przyjdzie pełny doc z changes feed)
   await repo.updateCard(id, patch);
 };
 

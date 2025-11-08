@@ -1,0 +1,12 @@
+@import '../../styles/settings.scss';
+
+.editor { max-width: 900px; margin: 0 auto; }
+.header { display:flex; justify-content: space-between; align-items:center; margin: 1rem 0; }
+.back { text-decoration:none; opacity:.8; }
+.meta > button { margin-left:.5rem; }
+.title { width:100%; font-size:1.6rem; margin: .5rem 0 1rem; padding:.5rem 0; background:transparent; border:none; border-bottom:1px solid rgba(255,255,255,.2); outline:none; color: $color-success}
+.tagsRow { margin-bottom: .75rem; }
+.tags { width:100%; padding:.5rem .75rem; }
+.quill { background: white; color: #111; border-radius: 8px; }
+.footer { margin: 1rem 0; opacity:.7; }
+.delete { color:#f55; }

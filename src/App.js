@@ -6,6 +6,7 @@ import About from "./components/About/About";
 import { Routes, Route } from 'react-router-dom';
 import NotFound from "./components/NotFound/NotFound";
 import List from "./components/List/List.js"
+import NoteEditor from './components/NoteEditor/NoteEditor';
 
 const App = () => {
   return (
@@ -18,6 +19,7 @@ const App = () => {
           <Route path="/about" element={<About />} />
           <Route path="/Favorite" element={<Favorite />} />
           <Route path="/list/:id" element={<List />} />
+          <Route path="/card/:id" element={<NoteEditor />} />
         </Routes>
       </Container>
     </div>

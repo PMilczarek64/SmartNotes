@@ -72,14 +72,15 @@ export async function listCategoriesByList(listId) {
 }
 
 /** ================ CARDS ================ */
-export async function createCard({ listId, categoryId, title, description = '', tags = [] }) {
+export async function createCard({ listId, categoryId = null, title, content = '', description = '', tags = [] }) {
   const doc = {
     _id: `card:${uuid()}`,
     type: 'card',
     listId,
-    categoryId,                           // 👈 musi zostać zapisane
+    categoryId,
     title,
-    description,
+    content,          // <— DODANE
+    description,      // (możesz pominąć jeśli content wystarczy)
     tags,
     isFavorite: false,
     createdAt: now(),
@@ -88,6 +89,7 @@ export async function createCard({ listId, categoryId, title, description = '', 
   await db.put(doc);
   return doc;
 }
+
 export async function updateCard(id, patch) {
   const cur = await db.get(id);
   const next = { ...cur, ...patch, updatedAt: now() };

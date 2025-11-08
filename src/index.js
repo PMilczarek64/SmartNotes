@@ -8,6 +8,8 @@ import { BrowserRouter } from 'react-router-dom';
 import './styles/normalize.scss';
 import './styles/global.scss';
 import 'font-awesome/css/font-awesome.min.css';
+import 'react-quill/dist/quill.snow.css';
+
 
 store.dispatch(bootstrapPouch());
 console.log('%c[index.js] bootstrapPouch dispatched', 'color:lightgreen');

@@ -1,12 +1,176 @@
 @import '../../styles/settings.scss';
 
-.editor { max-width: 900px; margin: 0 auto; }
-.header { display:flex; justify-content: space-between; align-items:center; margin: 1rem 0; }
-.back { text-decoration:none; opacity:.8; }
-.meta > button { margin-left:.5rem; }
-.title { width:100%; font-size:1.6rem; margin: .5rem 0 1rem; padding:.5rem 0; background:transparent; border:none; border-bottom:1px solid rgba(255,255,255,.2); outline:none; color: $color-success}
-.tagsRow { margin-bottom: .75rem; }
-.tags { width:100%; padding:.5rem .75rem; }
-.quill { background: white; color: #111; border-radius: 8px; }
-.footer { margin: 1rem 0; opacity:.7; }
-.delete { color:#f55; }
+/* ==== Design tokens (dark) ==== */
+:root {
+  --bg: #23272f;
+  --surface-1: #2b3038;
+  --surface-2: #313844;
+  --surface-3: #384151;
+  --text: #e7eef7;
+  --muted: #a9b4c1;
+  --primary: #6ee7b7;
+  --primary-ink: #093a2e;
+  --danger: #ff6b6b;
+  --border: #3d4655;
+  --ring: #9be7d7;
+  --shadow: 0 6px 20px rgba(0,0,0,.25);
+}
+
+/* ====== Twój istniejący styl (skrócony do kluczowych miejsc) ====== */
+/* Quill cały blok + focus-within */
+.quillBlock {
+  border: 1px solid var(--border);
+  border-radius: .75rem;
+  background: linear-gradient(180deg, var(--surface-2), var(--surface-1));
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.05), var(--shadow);
+  transition: border-color .15s, box-shadow .15s, transform .05s;
+  overflow: hidden;
+}
+.quillBlock:focus-within {
+  border-color: var(--ring);
+  box-shadow: 0 0 0 3px rgba(155,231,215,.25), var(--shadow);
+  transform: translateY(-1px);
+}
+:global(.ql-toolbar.ql-snow),
+:global(.ql-container.ql-snow) { border: none !important; }
+.quillBlock :global(.ql-toolbar.ql-snow) {
+  background: var(--surface-2);
+  padding: 8px 10px;
+  border-bottom: 1px solid var(--border);
+}
+.quillBlock :global(.ql-container.ql-snow) {
+  background: var(--surface-1);
+  min-height: 220px;
+}
+.quillBlock :global(.ql-editor) {
+  color: var(--text);
+  padding: 14px 16px;
+}
+
+/* Layout & controls */
+.editor { max-width: 720px; margin: 1.5rem auto 3rem; padding: 0 1rem; color: var(--text); }
+.header { display:flex; align-items:center; justify-content:space-between; margin-bottom:.75rem; }
+.back { color: var(--muted); text-decoration:none; transition:opacity .2s; &:hover{opacity:.9;} }
+.meta { display:flex; gap:.5rem; align-items:center; }
+.footer { margin-top:.75rem; color: var(--muted); }
+
+.field { display:grid; gap:.5rem; margin:1rem 0; }
+.label { font-size:.85rem; color:var(--muted); }
+
+.input {
+  width:100%; padding:.8rem 1rem; border-radius:.75rem; border:1px solid var(--border);
+  background:linear-gradient(180deg, var(--surface-2), var(--surface-1));
+  color:var(--text); box-shadow: inset 0 1px 0 rgba(255,255,255,.05), var(--shadow);
+  outline:none; transition:border-color .15s, box-shadow .15s, transform .05s;
+  &::placeholder { color:#91a0b2; }
+  &:hover { border-color:#4a5568; }
+  &:focus { border-color:var(--ring); box-shadow:0 0 0 3px rgba(155,231,215,.25), var(--shadow); transform:translateY(-1px); }
+}
+.title { composes: input; font-size:1.15rem; font-weight:600; }
+.row { display:flex; gap:.5rem; align-items:center; }
+
+.btnBase { padding:.75rem 1rem; border-radius:.75rem; border:1px solid transparent; font-weight:600; cursor:pointer;
+  transition: transform .05s, filter .15s, box-shadow .15s, background .15s; box-shadow:var(--shadow);
+  &:active { transform: translateY(1px); }
+}
+.btnPrimary { composes: btnBase; background: var(--primary); color: var(--primary-ink); &:hover{filter:brightness(1.03);}
+  &:focus { box-shadow: 0 0 0 3px rgba(110,231,183,.35), var(--shadow); }
+}
+.btnFavorite {
+  composes: btnBase;
+  background: var(--surface-1);
+  color: var(--text);
+  border: 1px solid #4a5568;
+  position: relative;
+
+  /* dodajemy płynne przejście + opóźnienie */
+  transition:
+    border-color .25s ease,
+    filter .25s ease,
+    background .25s ease,
+    color .25s ease;
+
+  &:hover {
+    border-color: #FFD54F;
+    color: #FFD54F;
+    filter: brightness(1.25);
+
+    /* opóźnienie aktywuje się tylko na hover */
+   
+  }
+}
+
+
+/* Kiedy karta jest ulubiona — pełny złoty motyw */
+.btnFavoriteActive {
+  composes: btnBase;
+  background: #FFD54F; 
+  color: #1a1402; /* ciemny atramentowy do kontrastu */
+  border: 1px solid #FFD54F;
+
+  &:hover {
+    filter: brightness(1.08);
+  }
+}
+.btnDanger { composes: btnBase; background: var(--danger); color:#2a0202; &:hover{filter:brightness(1.04);} }
+
+/* TAGI */
+.chips { display:flex; flex-wrap:wrap; gap:.4rem; }
+.chip { display:inline-flex; align-items:center; gap:.4rem; padding:.35rem .6rem; border-radius:999px;
+  border:1px solid var(--border); background:linear-gradient(180deg, var(--surface-3), var(--surface-2));
+  box-shadow:var(--shadow); font-size:.85rem;
+}
+.chipRemove { border:none; background:transparent; color:var(--muted); cursor:pointer; line-height:1; padding:0; &:hover{color:#fff;} }
+
+/* ========= REACT-QUILL global (opcjonalnie, jeśli nie używasz .quillBlock na focus) ========= */
+:global(.ql-toolbar .ql-picker){ color:var(--text); }
+:global(.ql-toolbar .ql-stroke){ stroke:var(--text); }
+:global(.ql-toolbar .ql-fill){ fill:var(--text); }
+
+/* ===================== SWITCH (Autosave) ===================== */
+.switch {
+  display: inline-flex;
+  align-items: center;
+  gap: .5rem;
+  cursor: pointer;
+  user-select: none;
+}
+.switchText { color: var(--muted); font-weight: 600; }
+.switchInput {
+  position: absolute;
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+.switchTrack {
+  width: 46px;
+  height: 26px;
+  border-radius: 999px;
+  background: #3b4656; /* nieaktywne */
+  position: relative;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.06), var(--shadow);
+  transition: background .15s ease, box-shadow .15s ease;
+  border: 1px solid var(--border);
+}
+.switchThumb {
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: #f8fafc; /* „białe” w dark */
+  box-shadow: 0 1px 2px rgba(0,0,0,.25);
+  transition: transform .18s ease;
+}
+.switchInput:checked + .switchTrack {
+  /* aktywne – w naszej miętowej palecie */
+  background: linear-gradient(180deg, var(--primary), #34d399);
+  border-color: transparent;
+}
+.switchInput:checked + .switchTrack .switchThumb {
+  transform: translateX(20px);
+}
+.switchInput:focus + .switchTrack {
+  box-shadow: 0 0 0 3px rgba(155,231,215,.35), var(--shadow);
+}

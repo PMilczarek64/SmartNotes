@@ -17,14 +17,23 @@ const Column = ({ columnId, listId, title, icon }) => {
     <article className={styles.column}>
       <h2 className={styles.title}>
         <span className={`fa fa-${icon} ${styles.icon}`} /> {title}
-        <button className={styles.removeBtn} title="Delete column" onClick={handleDeleteColumn}>
+        <button
+          className={styles.removeBtn}
+          title="Delete column"
+          onClick={handleDeleteColumn}
+        >
           ✖
         </button>
       </h2>
 
       <ul className={styles.cards}>
         {cards.map(card => (
-          <Card key={card._id} id={card._id} title={card.title} isFavorite={card.isFavorite} />
+          <Card
+            key={card._id}
+            id={card._id}
+            title={card.title}
+            isFavorite={card.isFavorite}
+          />
         ))}
       </ul>
 

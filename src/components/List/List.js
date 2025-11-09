@@ -27,30 +27,26 @@ const List = () => {
         <h2 className={styles.title}>{list.title}</h2>
         {list.description && <p className={styles.description}>{list.description}</p>}
       </header>
-
-      <SearchForm />
-
-      <div className={styles.columnsWrapper}>
+      <div className={styles.contentWrapper}>
+        <div className={styles.formsBar}>
+          <ColumnForm listId={list._id} />
+          <SearchForm />
+        </div>
+        <div className={styles.columnsWrapper}>
         <div className={styles.columns}>
           {categories.map(category => (
             <Column
               key={category._id}
               title={category.title}
               icon={category.icon}
-              columnId={category._id}  // ważne: id kolumny = _id kategorii
-              listId={list._id}        // ważne: id listy
+              columnId={category._id}
+              listId={list._id}
             />
           ))}
-
-          <ColumnForm listId={list._id} />
         </div>
       </div>
-
+      </div>
       {categories.length === 0 && <p className={styles.empty}>No columns yet.</p>}
-
-      <footer className={styles.footer}>
-        <Link to="/" className={styles.backLink}>← Back to lists</Link>
-      </footer>
     </section>
   );
 };

@@ -1,16 +1,45 @@
+// src/components/Column/Column.module.scss
 @use "sass:math";
-@import '../../styles/settings.scss';
+@import "../../styles/settings.scss";
+
+// Odstępy między kolumnami (dopasuj do swojego layoutu zewnętrznego)
+$gap: math.div($base-size, 1);
 
 .column {
-  flex-shrink: 0;
-  width: calc(33% - 12px);
+  // Kolumna jako element elastyczny — upewnij się, że kontener rodzica ma: display:flex; flex-wrap:wrap;
+  // Przykładowa konfiguracja rodzica (nie w tym pliku): .columns { display:flex; flex-wrap:wrap; gap:$gap; }
+  flex: 0 0 calc(23% - #{$gap}); // 4 w rzędzie na bardzo dużych ekranach
+  min-width: 360px;              // bezpieczne minimum, by 4 kolumny mieściły się na 24"
+  max-width: 500px;
   background: $color-light;
-  margin: 5;
+  margin: math.div($base-size, 2);
   padding: ($base-size * 1.5);
   border-radius: $radius;
-  box-shadow: 0 math.div($base-size, 4) 0 rgba(0,0,0,0.3);
+  box-shadow: 0 math.div($base-size, 4) 0 rgba(0, 0, 0, 0.3);
   color: $color-dark;
-  
+}
+
+// 3 kolumny (duże / średnie ekrany)
+@media (max-width: 1599px) {
+  .column {
+    flex-basis: calc(33.333% - #{$gap});
+  }
+}
+
+// 2 kolumny (np. ~14" laptopy, tablet w poziomie)
+@media (max-width: 991px) {
+  .column {
+    flex-basis: calc(50% - #{$gap});
+  }
+}
+
+// 1 kolumna (mobile)
+@media (max-width: 767px) {
+  .column {
+    flex-basis: 100%;
+    width: 100%;
+    margin: 0 0 $base-size 0;
+  }
 }
 
 .title {
@@ -19,7 +48,6 @@
   font-size: ($base-size * 1.5);
   margin: 0 0 ($base-size * 1.5) 0;
 }
-
 
 .icon::before {
   padding-right: $base-size;
@@ -32,13 +60,6 @@
 
 .cards {
   padding: math.div($base-size, 2) 0;
-}
-
-@media (max-width: 767px) {
-  .column {
-    width: 100%;
-    margin: 0 0 $base-size 0;
-  }
 }
 
 .removeBtn {

@@ -13,8 +13,8 @@ const Lists = () => {
   return (
     <section className={styles.lists}>
       {(lists.length ?
-        <h2 className={styles.heading}>Browse lists</h2> :
-        <h2 className={styles.heading}>Fill in the fields to add a list...</h2>
+        <h2 className={styles.heading}>Pick a notebook or create a new one ;)</h2> :
+        <h2 className={styles.heading}>Fill in the fields to add your first notebook... ;)</h2>
       )}
 
       {lists.map((list) => (

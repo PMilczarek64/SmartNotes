@@ -2,12 +2,10 @@ import styles from './ColumnForm.module.scss';
 import { useState } from 'react';
 import Button from '../Button/Button';
 import TextInput from '../TextInput/TextInput';
-
-// 🔄 nowy import — zamiast Redux dispatch
 import { usePouchActions } from '../../hooks/pouchHooks';
 
 const ColumnForm = ({ listId }) => {
-  const { createColumn } = usePouchActions(); // nowa akcja PouchDB
+  const { createColumn } = usePouchActions();
 
   const [title, setTitle] = useState('');
   const [icon, setIcon] = useState('');
@@ -17,7 +15,6 @@ const ColumnForm = ({ listId }) => {
 
     if (!title.trim()) return;
 
-    // 🔹 Zapisujemy kolumnę do bazy PouchDB
     createColumn({
       listId,
       title,
@@ -26,31 +23,28 @@ const ColumnForm = ({ listId }) => {
       type: 'column',
     });
 
-    // 🔄 Reset formularza
     setTitle('');
     setIcon('');
   };
 
   return (
     <form className={styles.columnForm} onSubmit={handleSubmit}>
-      <span>
-        Title:{' '}
-        <TextInput
-          className={styles.input}
-          type="text"
-          value={title}
-          onChange={(e) => setTitle(e.target.value)}
-        />
-      </span>
-      <span>
-        Icon:{' '}
-        <TextInput
-          className={styles.input}
-          type="text"
-          value={icon}
-          onChange={(e) => setIcon(e.target.value)}
-        />
-      </span>
+      <TextInput
+        className={styles.input}
+        type="text"
+        placeholder="Column title..."
+        value={title}
+        onChange={(e) => setTitle(e.target.value)}
+      />
+
+      <TextInput
+        className={styles.input}
+        type="text"
+        placeholder="Icon (optional)..."
+        value={icon}
+        onChange={(e) => setIcon(e.target.value)}
+      />
+
       <Button>Add column</Button>
     </form>
   );

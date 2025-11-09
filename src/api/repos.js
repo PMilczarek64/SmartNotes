@@ -6,10 +6,10 @@ const now = () => new Date().toISOString();
 /** =============== LISTS =============== */
 export async function createList({ title, description = '', icon = '' }) {
   const doc = {
-    _id: `${uuid()}`,          // zostaw taki format jak masz obecnie
+    _id: `${uuid()}`,          
     type: 'list',
     title,
-    description,               // ← DODANE
+    description,               
     icon,
     createdAt: now(),
     updatedAt: now(),
@@ -52,13 +52,19 @@ export async function createCategory({ listId, title, icon = '' }) {
   return doc;            
 };
 
-export const editCategory = (id, patch) => async (dispatch, getState, { db }) => {
-  const current = await db.get(id);
-  const updated = { ...current, ...patch, updatedAt: now() };
-  await db.put(updated);
-  dispatch({ type: 'pouch/upsertDoc', payload: updated });
-  return updated;
-};
+
+export async function editCategory(id, patch = {}) {
+  const cur = await db.get(id);                                    // ma _id i _rev
+  const next = {
+    ...cur,
+    ...patch,
+    _id: id,
+    type: 'category',
+    updatedAt: new Date().toISOString(),
+  };
+  const res = await db.put(next);                                  // zapis z poprawnym _rev
+  return { ...next, _rev: res.rev };                               // zwróć pełny doc po zapisie
+}
 
 export async function deleteCategory(id) {
   const cards = (await db.find({ selector: { type: 'card', categoryId: id } })).docs;
@@ -79,8 +85,8 @@ export async function createCard({ listId, categoryId = null, title, content = '
     listId,
     categoryId,
     title,
-    content,          // <— DODANE
-    description,      // (możesz pominąć jeśli content wystarczy)
+    content,         
+    description,     
     tags,
     isFavorite: false,
     createdAt: now(),
@@ -110,27 +116,60 @@ export async function listCardsByList(listId) {
   return arr;
 }
 
-// proste wyszukiwanie po tytule/opisie (+ tagi/favorites)
-export async function searchCards({ q = '', tags = [], favoritesOnly = false, listId = null } = {}) {
-  let cards = (await db.find({ selector: { type: 'card', ...(listId ? { listId } : {}) } })).docs;
 
-  if (favoritesOnly) cards = cards.filter(c => !!c.isFavorite);
+export async function searchCards({ listId, q = '', tags = [], favoritesOnly = false } = {}) {
+  const selector = { type: 'card' };
+  if (listId) selector.listId = listId;
+  if (favoritesOnly) selector.isFavorite = true;
 
-  if (q) {
-    const s = q.toLowerCase();
-    cards = cards.filter(c =>
-      (c.title || '').toLowerCase().includes(s) ||
-      (c.description || '').toLowerCase().includes(s)
-    );
-  }
+  const { docs } = await db.find({
+    selector,
+    fields: ['_id', '_rev', 'title', 'description', 'tags', 'updatedAt', 'listId', 'categoryId', 'isFavorite']
+  });
 
-  if (tags?.length) {
-    const set = new Set(tags.map(t => String(t).toLowerCase()));
-    cards = cards.filter(c => (c.tags || []).some(t => set.has(String(t).toLowerCase())));
-  }
+  const query = (q || '').trim().toLowerCase();
+  const words = query ? query.split(/\s+/).filter(Boolean) : [];
+  const tagSet = new Set((tags || []).map(t => String(t).toLowerCase()));
 
-  cards.sort((a, b) => b.updatedAt.localeCompare(a.updatedAt));
-  return cards;
+  const scored = docs.map(d => {
+    const title = (d.title || '').toLowerCase();
+    const desc  = (d.description || '').toLowerCase();
+    const dtags = Array.isArray(d.tags) ? d.tags.map(t => String(t).toLowerCase()) : [];
+
+    let score = 0;
+
+    if (query) {
+      // pełny ciąg
+      if (title.includes(query)) score += 6;
+      if (desc.includes(query))  score += 3;
+
+      // słowa
+      for (const w of words) {
+        if (title.includes(w)) score += 4;
+        if (desc.includes(w))  score += 2;
+      }
+    }
+
+    // tagi – silny sygnał
+    let tagMatches = 0;
+    if (tagSet.size) {
+      for (const t of dtags) if (tagSet.has(t)) tagMatches++;
+      score += tagMatches * 5;
+    }
+
+    return { ...d, _score: score, _tagMatches: tagMatches };
+  })
+  // Jeśli był query lub tagi – filtrujemy do trafień; jeśli nie, zwracamy wszystko (np. dla pustego q)
+  .filter(d => {
+    if (tagSet.size && !query) return d._tagMatches > 0;
+    if (!tagSet.size && query) return d._score > 0;
+    if (tagSet.size && query)  return d._score > 0 || d._tagMatches > 0;
+    return true;
+  })
+  // sort: najpierw wynik trafności, potem nowsze
+  .sort((a, b) => (b._score - a._score) || (b.updatedAt || '').localeCompare(a.updatedAt || ''));
+
+  return scored;
 }
 
 /** ============ (opcjonalnie) ZAŁĄCZNIKI ============ */

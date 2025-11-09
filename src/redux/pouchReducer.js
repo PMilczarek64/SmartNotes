@@ -1,12 +1,9 @@
-// src/redux/pouchReducer.js
-
 const INITIAL = { lists: [], categories: [], cards: [], loaded: false };
 
-/** Bezpieczny upsert: scala istniejący dokument z nowym, zamiast nadpisywać całość */
 function upsertById(arr, doc) {
   const i = arr.findIndex(d => d._id === doc._id);
   if (i >= 0) {
-    const merged = { ...arr[i], ...doc }; // <-- KLUCZ: SCAL
+    const merged = { ...arr[i], ...doc };
     const copy = arr.slice();
     copy[i] = merged;
     return copy;
@@ -50,16 +47,26 @@ export default function pouchReducer(state = INITIAL, action) {
 
     case 'pouch/removeDoc': {
       const doc = action.payload;
-      if (!doc || !doc.type || !doc._id) return state;
+      if (!doc || !doc._id) return state;
 
-      const key =
-        doc.type === 'list' ? 'lists' :
-        doc.type === 'category' ? 'categories' :
-        doc.type === 'card' ? 'cards' : null;
+      if (doc.type === 'list') {
+        return { ...state, lists: state.lists.filter(d => d._id !== doc._id) };
+      }
+      if (doc.type === 'category') {
+        return { ...state, categories: state.categories.filter(d => d._id !== doc._id) };
+      }
+      if (doc.type === 'card') {
+        return { ...state, cards: state.cards.filter(d => d._id !== doc._id) };
+      }
 
-      if (!key) return state;
-      return { ...state, [key]: state[key].filter(d => d._id !== doc._id) };
+      return {
+        ...state,
+        lists: state.lists.filter(d => d._id !== doc._id),
+        categories: state.categories.filter(d => d._id !== doc._id),
+        cards: state.cards.filter(d => d._id !== doc._id),
+      };
     }
+
 
     default:
       return state;
@@ -67,7 +74,7 @@ export default function pouchReducer(state = INITIAL, action) {
 }
 
 /* Action creators */
-export const pouchSetAll   = (payload) => ({ type: 'pouch/setAll',    payload });
+export const pouchSetAll = (payload) => ({ type: 'pouch/setAll', payload });
 export const pouchUpsertDoc = (payload) => ({ type: 'pouch/upsertDoc', payload });
 export const pouchRemoveDoc = (payload) => ({ type: 'pouch/removeDoc', payload });
 

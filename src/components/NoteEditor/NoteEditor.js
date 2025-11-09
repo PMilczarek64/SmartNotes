@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useMemo, useCallback } from 'react';
+import React, { useEffect, useState, useMemo, useCallback, useRef } from 'react';
 import { useParams, Link, Navigate } from 'react-router-dom';
 import { useSelector } from 'react-redux';
 import ReactQuill from 'react-quill';
@@ -25,7 +25,7 @@ export default function NoteEditor() {
   const [tags, setTags] = useState(Array.isArray(card?.tags) ? card.tags : []);
   const [tagsInput, setTagsInput] = useState('');
 
-  // --- AUTOSAVE (przełącznik) ---
+  // AUTOSAVE toggle
   const [autosave, setAutosave] = useState(() => {
     try {
       const raw = localStorage.getItem('smartnotes.autosave');
@@ -34,29 +34,39 @@ export default function NoteEditor() {
       return false;
     }
   });
+
   useEffect(() => {
     try {
       localStorage.setItem('smartnotes.autosave', autosave ? '1' : '0');
     } catch {}
   }, [autosave]);
 
-  // Po zmianie karty – zsynchronizuj pola
+  // Debounce timer
+  const saveTimer = useRef(null);
+
+  const scheduleAutosave = useCallback(() => {
+    if (!autosave || !card) return;
+
+    clearTimeout(saveTimer.current);
+    saveTimer.current = setTimeout(() => {
+      updateCard(card._id, { title, content, tags });
+      console.log('[autosave] zapisano');
+    }, 1000); // 5 sekund
+  }, [autosave, card, title, content, tags, updateCard]);
+
+  // Po zmianie karty
   useEffect(() => {
     setTitle(card?.title || '');
     setContent(card?.content || '');
     setTags(Array.isArray(card?.tags) ? card.tags : []);
     setTagsInput('');
+    clearTimeout(saveTimer.current);
   }, [card?._id]);
 
-  // Jeśli włączymy autosave w trakcie edycji — od razu zsynchronizuj bieżący stan do bazy
-  useEffect(() => {
-    if (autosave && card) {
-      updateCard(card._id, { title, content, tags });
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [autosave]);
+  // Sprzątanie timera przy opuszczaniu strony / zmiany karty
+  useEffect(() => () => clearTimeout(saveTimer.current), []);
 
-  // Podgląd co zostanie dodane
+  // --- Parsowanie tagów ---
   const parsedToAdd = useMemo(() => {
     const parts = (tagsInput || '')
       .split(SPLIT_RE)
@@ -67,50 +77,50 @@ export default function NoteEditor() {
     return notExisting;
   }, [tagsInput, tags]);
 
-  // Dodawanie tagów
-  const addTags = useCallback(() => {
-    if (!card || parsedToAdd.length === 0) return;
-    const next = Array.from(new Set([...tags.map(norm), ...parsedToAdd])).filter(Boolean);
-    setTags(next);
-    setTagsInput('');
-    if (autosave) {
-      updateCard(card._id, { tags: next });
-    }
-  }, [card, parsedToAdd, tags, autosave, updateCard]);
+  // Dodawanie tagów (natychmiast zapisuje)
+const addTags = useCallback(() => {
+  if (!card || parsedToAdd.length === 0) return;
 
-  // Usuwanie tagu
-  const removeTag = useCallback(
-    (tag) => {
-      if (!card) return;
-      const next = (tags || []).filter((t) => norm(t) !== norm(tag));
-      setTags(next);
-      if (autosave) {
-        updateCard(card._id, { tags: next });
-      }
-    },
-    [card, tags, autosave, updateCard]
-  );
+  const next = Array.from(new Set([...tags.map(norm), ...parsedToAdd])).filter(Boolean);
+  setTags(next);
+  setTagsInput('');
 
-  // Zapis tytułu + treści + tagów na przycisk
+  // Zapis NATYCHMIASTOWY
+  updateCard(card._id, { tags: next });
+
+  // reset debounce save — żeby to nie nadpisywało później
+  clearTimeout(saveTimer.current);
+}, [card, parsedToAdd, tags, updateCard]);
+
+
+// Usuwanie tagu (natychmiast zapisuje)
+const removeTag = useCallback((tag) => {
+  if (!card) return;
+
+  const next = (tags || []).filter((t) => norm(t) !== norm(tag));
+  setTags(next);
+
+  // Zapis NATYCHMIASTOWY
+  updateCard(card._id, { tags: next });
+
+  clearTimeout(saveTimer.current);
+}, [card, tags, updateCard]);
+
+
   const saveNote = useCallback(() => {
     if (!card) return;
+    clearTimeout(saveTimer.current);
     updateCard(card._id, { title, content, tags });
   }, [card, title, content, tags, updateCard]);
 
-  // --- Handlery z uwzględnieniem AUTOSAVE ---
   const handleTitleChange = (e) => {
-    const v = e.target.value;
-    setTitle(v);
-    if (autosave && card) {
-      updateCard(card._id, { title: v });
-    }
+    setTitle(e.target.value);
+    scheduleAutosave();
   };
 
   const handleContentChange = (v) => {
     setContent(v);
-    if (autosave && card) {
-      updateCard(card._id, { content: v });
-    }
+    scheduleAutosave();
   };
 
   if (!card) return <Navigate to="/" />;
@@ -149,7 +159,6 @@ export default function NoteEditor() {
         </div>
       </header>
 
-      {/* Tytuł */}
       <div className={styles.field}>
         <label className={styles.label}>Title</label>
         <input
@@ -160,7 +169,6 @@ export default function NoteEditor() {
         />
       </div>
 
-      {/* Tagi */}
       <div className={styles.field}>
         <label className={styles.label}>Tagi</label>
         <div className={styles.row}>
@@ -187,7 +195,6 @@ export default function NoteEditor() {
           </button>
         </div>
 
-        {/* Chipy pod polem */}
         <div className={styles.chips}>
           {Array.isArray(tags) && tags.length > 0 ? (
             tags.map((t) => (
@@ -209,7 +216,6 @@ export default function NoteEditor() {
         </div>
       </div>
 
-      {/* Quill – cały blok się podświetla dzięki .quillBlock:focus-within */}
       <div className={styles.field}>
         <label className={styles.label}>Content</label>
         <div className={styles.quillBlock}>
@@ -219,9 +225,8 @@ export default function NoteEditor() {
 
       <footer className={styles.footer}>
         <small>
-          Created: {card.createdAt ? new Date(card.createdAt).toLocaleString() : '—'}
-          {' • '}
-          Updated: {card.updatedAt ? new Date(card.updatedAt).toLocaleString() : '—'}
+          Created: {card.createdAt ? new Date(card.createdAt).toLocaleString() : '—'} • Updated:{' '}
+          {card.updatedAt ? new Date(card.updatedAt).toLocaleString() : '—'}
         </small>
       </footer>
     </section>

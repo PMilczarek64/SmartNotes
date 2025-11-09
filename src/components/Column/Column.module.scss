@@ -2,14 +2,12 @@
 @use "sass:math";
 @import "../../styles/settings.scss";
 
-// Odstępy między kolumnami (dopasuj do swojego layoutu zewnętrznego)
 $gap: math.div($base-size, 1);
 
 .column {
-  // Kolumna jako element elastyczny — upewnij się, że kontener rodzica ma: display:flex; flex-wrap:wrap;
-  // Przykładowa konfiguracja rodzica (nie w tym pliku): .columns { display:flex; flex-wrap:wrap; gap:$gap; }
-  flex: 0 0 calc(23% - #{$gap}); // 4 w rzędzie na bardzo dużych ekranach
-  min-width: 360px;              // bezpieczne minimum, by 4 kolumny mieściły się na 24"
+ 
+  flex: 0 0 calc(23% - #{$gap});
+  min-width: 430px;             
   max-width: 500px;
   background: $color-light;
   margin: math.div($base-size, 2);
@@ -19,7 +17,6 @@ $gap: math.div($base-size, 1);
   color: $color-dark;
 }
 
-// 3 kolumny (duże / średnie ekrany)
 @media (max-width: 1599px) {
   .column {
     flex-basis: calc(33.333% - #{$gap});
@@ -74,4 +71,62 @@ $gap: math.div($base-size, 1);
   &:hover {
     color: red;
   }
+}
+
+.editBtn {
+  appearance: none;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+
+  width: 26px;
+  height: 26px;
+  border-radius: 9999px;
+  display: inline-grid;
+  place-items: center;
+  font-size: 20px;     
+  color: #8a8f98;
+
+  opacity: 0;
+  transform: translateY(1px);
+  transition: opacity .15s ease, background-color .15s ease, color .15s ease;
+
+  margin-left: .25rem;
+}
+
+.title:hover .editBtn,
+.title:focus-within .editBtn {
+  opacity: 1;
+}
+
+.editBtn:hover {
+  color: #111827;
+  background: rgba(0,0,0,.06);
+}
+
+.editBtn:active {
+  transform: translateY(1px) scale(0.98);
+}
+
+.editBtn:focus-visible {
+  outline: 2px solid #2563eb;   
+  outline-offset: 2px;
+  opacity: 1;                  
+}
+
+.titleInput {
+  font: inherit;
+  color: inherit;
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 5px;
+  padding: .35rem .5rem;
+  min-width: 12ch;
+  max-width: 80%;
+}
+
+.titleInput:focus {
+  outline: 2px solid transparent;
+  outline-offset: 2px;
+  border-color: transparent;
 }

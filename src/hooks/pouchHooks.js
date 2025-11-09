@@ -1,6 +1,7 @@
 // src/hooks/pouchHooks.js
 import { useDispatch, useSelector } from 'react-redux';
 import { useEffect, useMemo, useState } from 'react';
+import { scoreCardAgainstQuery, normalizeText } from '../utils/textSearch';
 
 import {
   selectPouchLists,
@@ -10,9 +11,9 @@ import {
 
 import {
   addList, removeList, editList,
-  addCategory,        // create column
+  addCategory,       
   editCategory,
-  removeCategory,       // update column
+  removeCategory,      
   addCard, editCard, toggleFavorite, removeCard,
   searchCardsThunk,
 } from '../redux/pouchThunks';
@@ -57,13 +58,11 @@ export function usePouchColumns(listId) {
 }
 
 
-// ====== CARDS ======
-// src/hooks/pouchHooks.js (fragment: usePouchCards)
+// src/hooks/pouchHooks.js – fragment usePouchCards
 export function usePouchCards({ listId, categoryId = null, q = undefined, favoritesOnly = false }) {
   const selectCardsForList = useMemo(() => selectPouchCardsByList(listId), [listId]);
   const cardsAll = useSelector(selectCardsForList);
 
-  // 🔎 bierzemy globalny searchKey, jeśli q nie podane
   const globalQ = useSelector(state => state?.searchString?.searchKey || '');
   const effectiveQ = (typeof q === 'string') ? q : globalQ;
 
@@ -71,18 +70,28 @@ export function usePouchCards({ listId, categoryId = null, q = undefined, favori
     let out = [...cardsAll];
     if (categoryId) out = out.filter(c => c.categoryId === categoryId);
     if (favoritesOnly) out = out.filter(c => !!c.isFavorite);
+
     if (effectiveQ) {
-      const s = effectiveQ.toLowerCase();
-      out = out.filter(c =>
-        (c.title || '').toLowerCase().includes(s) ||
-        (c.description || '').toLowerCase().includes(s)
-      );
+      const s = effectiveQ.toLowerCase().trim();
+
+      out = out.filter(c => {
+        const inTitle = (c.title || '').toLowerCase().includes(s);
+        const inDesc  = (c.description || '').toLowerCase().includes(s);
+
+        const inTags = Array.isArray(c.tags)
+          ? c.tags.some(t => String(t).toLowerCase().includes(s))
+          : false;
+
+        return inTitle || inDesc || inTags;
+      });
     }
+
     return out.sort((a, b) => b.updatedAt?.localeCompare(a.updatedAt || '') || 0);
   }, [cardsAll, categoryId, favoritesOnly, effectiveQ]);
 
   return filtered;
 }
+
 
 
 
@@ -118,7 +127,7 @@ export function usePouchActions() {
 
   // ====== COLUMNS ======
   const createColumn = (payload) => dispatch(addCategory(payload));      // create
-  const updateColumn = (id, patch) => dispatch(editCategory(id, patch)); // update
+ const updateColumn = (id, patch) => { return dispatch(editCategory(id, patch)); }; // update
   const createCategory = (payload) => dispatch(addCategory(payload));    // alias
   const destroyCategory = (id) => dispatch(removeCategory(id));
 

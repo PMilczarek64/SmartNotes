@@ -33,18 +33,21 @@ const List = () => {
           <SearchForm />
         </div>
         <div className={styles.columnsWrapper}>
-        <div className={styles.columns}>
-          {categories.map(category => (
-            <Column
-              key={category._id}
-              title={category.title}
-              icon={category.icon}
-              columnId={category._id}
-              listId={list._id}
-            />
-          ))}
+          <h2 className={styles.heading}>Create a column, then add a card inside it with a note title.
+            By clicking the created card, you can open the advanced note editor.
+          </h2>
+          <div className={styles.columns}>
+            {categories.map(category => (
+              <Column
+                key={category._id}
+                title={category.title}
+                icon={category.icon}
+                columnId={category._id}
+                listId={list._id}
+              />
+            ))}
+          </div>
         </div>
-      </div>
       </div>
       {categories.length === 0 && <p className={styles.empty}>No columns yet.</p>}
     </section>

@@ -45,7 +45,7 @@ const ColumnForm = ({ listId }) => {
         onChange={(e) => setIcon(e.target.value)}
       />
 
-      <Button>Add column</Button>
+      <Button extraClass="full-wide" >Add column</Button>
     </form>
   );
 };

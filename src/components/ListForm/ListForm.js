@@ -40,7 +40,7 @@ const ListForm = () => {
         value={description}
         onChange={(e) => setDescription(e.target.value)}
       />
-      <Button>Add list</Button>
+      <Button>Add Notebook</Button>
     </form>
   );
 };

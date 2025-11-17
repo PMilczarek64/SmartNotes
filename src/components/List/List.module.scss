@@ -14,13 +14,24 @@
     align-items: center;
 }
 
+.heading {
+    text-align: center;
+    max-width: 900px;
+}
+
 .contentWrapper {
     margin-inline: 20px;
 }
 
 .formsBar {
-    display: flex;
-    justify-content: space-between;
+  display: flex;
+  justify-content: space-between;
+  flex-wrap: wrap; // <— to jest kluczowe!
+  gap: 12px; // opcjonalnie, wygląda lepiej
+  @media (max-width: 630px) {
+    flex-direction: column;
+    align-items: center;
+  }
 }
 
 .title {
